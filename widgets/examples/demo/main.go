@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/losinggeneration/slotslop/widgets"
-	"github.com/losinggeneration/tui"
-	"github.com/losinggeneration/tui/geom"
-	"github.com/losinggeneration/tui/style"
-	"github.com/losinggeneration/tui/text"
+	"github.com/losinggeneration/rovel"
+	"github.com/losinggeneration/rovel/geom"
+	"github.com/losinggeneration/rovel/style"
+	"github.com/losinggeneration/rovel/text"
 )
 
 func hsvColor(h, s, v float64) style.Color {
@@ -49,45 +49,45 @@ var state struct {
 
 // ── Child views ───────────────────────────────────────────────────────────────
 
-type counterContent struct{ id tui.ID; rect geom.Rect }
-func newCounterContent() *counterContent { return &counterContent{id: tui.NewID()} }
-func (c *counterContent) ID() tui.ID      { return c.id }
+type counterContent struct{ id rovel.ID; rect geom.Rect }
+func newCounterContent() *counterContent { return &counterContent{id: rovel.NewID()} }
+func (c *counterContent) ID() rovel.ID      { return c.id }
 func (c *counterContent) Rect() geom.Rect { return c.rect }
 func (c *counterContent) MinSize() geom.Size { return geom.Size{W: 22, H: 5} }
 func (c *counterContent) Layout(r geom.Rect)  { c.rect = r }
-func (c *counterContent) Handle(tui.Event, *tui.Ctx) bool { return false }
+func (c *counterContent) Handle(rovel.Event, *rovel.Ctx) bool { return false }
 func (c *counterContent) Focusable() bool { return false }
-func (c *counterContent) Paint(d tui.Drawer, ctx *tui.Ctx) {
+func (c *counterContent) Paint(d rovel.Drawer, ctx *rovel.Ctx) {
 	st := ctx.Theme.Base
 	d.DrawText(geom.Point{X: c.rect.X, Y: c.rect.Y + 1}, fmt.Sprintf("  counter: %d", state.counter), st.WithAttr(style.AttrBold))
 	d.DrawText(geom.Point{X: c.rect.X, Y: c.rect.Y + 2}, "  press space to tick", st.WithAttr(style.AttrDim))
 }
 
-type emptyContent struct{ id tui.ID; rect geom.Rect }
-func newEmptyContent() *emptyContent { return &emptyContent{id: tui.NewID()} }
-func (e *emptyContent) ID() tui.ID      { return e.id }
+type emptyContent struct{ id rovel.ID; rect geom.Rect }
+func newEmptyContent() *emptyContent { return &emptyContent{id: rovel.NewID()} }
+func (e *emptyContent) ID() rovel.ID      { return e.id }
 func (e *emptyContent) Rect() geom.Rect { return e.rect }
 func (e *emptyContent) MinSize() geom.Size { return geom.Size{W: 18, H: 5} }
 func (e *emptyContent) Layout(r geom.Rect)  { e.rect = r }
-func (e *emptyContent) Handle(tui.Event, *tui.Ctx) bool { return false }
+func (e *emptyContent) Handle(rovel.Event, *rovel.Ctx) bool { return false }
 func (e *emptyContent) Focusable() bool { return false }
-func (e *emptyContent) Paint(d tui.Drawer, ctx *tui.Ctx) {
+func (e *emptyContent) Paint(d rovel.Drawer, ctx *rovel.Ctx) {
 	d.DrawText(geom.Point{X: e.rect.X + 2, Y: e.rect.Y + 2}, "no title text", ctx.Theme.Base.WithAttr(style.AttrDim))
 }
 
 // ── Main view ─────────────────────────────────────────────────────────────────
 
 type contentView struct {
-	id          tui.ID
+	id          rovel.ID
 	rect        geom.Rect
 	borderTitle *widgets.PhaseBorder
 	borderPlain *widgets.PhaseBorder
 }
 
 func newContentView() *contentView {
-	v := &contentView{id: tui.NewID()}
+	v := &contentView{id: rovel.NewID()}
 
-	rainbowFn := func(part tui.BoxPart, x, y int, r geom.Rect, phase, t float64) style.Style {
+	rainbowFn := func(part rovel.BoxPart, x, y int, r geom.Rect, phase, t float64) style.Style {
 		hue := 360*t + phase*200
 		return style.Style{FG: hsvColor(hue, 1, 1), Attr: style.AttrBold}
 	}
@@ -100,16 +100,16 @@ func newContentView() *contentView {
 	return v
 }
 
-func (v *contentView) ID() tui.ID      { return v.id }
+func (v *contentView) ID() rovel.ID      { return v.id }
 func (v *contentView) Rect() geom.Rect { return v.rect }
 func (v *contentView) MinSize() geom.Size { return geom.Size{W: 60, H: 16} }
 func (v *contentView) Layout(r geom.Rect) { v.rect = r }
 func (v *contentView) Focusable() bool    { return false }
-func (v *contentView) Children() []tui.View { return nil }
+func (v *contentView) Children() []rovel.View { return nil }
 
-func (v *contentView) Paint(d tui.Drawer, ctx *tui.Ctx) {
+func (v *contentView) Paint(d rovel.Drawer, ctx *rovel.Ctx) {
 	r := v.rect
-	cd, _ := tui.CellDrawerOf(d)
+	cd, _ := rovel.CellDrawerOf(d)
 	phase := state.phase
 
 	v.borderTitle.SetPhase(phase)
@@ -163,13 +163,13 @@ func (v *contentView) Paint(d tui.Drawer, ctx *tui.Ctx) {
 	})
 }
 
-func (v *contentView) Handle(e tui.Event, ctx *tui.Ctx) bool {
-	if ke, ok := e.(tui.KeyEvent); ok {
+func (v *contentView) Handle(e rovel.Event, ctx *rovel.Ctx) bool {
+	if ke, ok := e.(rovel.KeyEvent); ok {
 		switch {
-		case ke.Key == tui.KeyRune && ke.Rune == 'q', ke.Key == tui.KeyEsc:
+		case ke.Key == rovel.KeyRune && ke.Rune == 'q', ke.Key == rovel.KeyEsc:
 			ctx.Quit()
 			return true
-		case ke.Key == tui.KeyRune && ke.Rune == ' ':
+		case ke.Key == rovel.KeyRune && ke.Rune == ' ':
 			state.counter++
 			ctx.InvalidateAll()
 			return true
@@ -181,9 +181,9 @@ func (v *contentView) Handle(e tui.Event, ctx *tui.Ctx) bool {
 // ── main ──────────────────────────────────────────────────────────────────────
 
 func main() {
-	app, err := tui.New(tui.AppOpts{
-		Theme: tui.DefaultThemeModern(),
-		Input: tui.InputOpts{},
+	app, err := rovel.New(rovel.AppOpts{
+		Theme: rovel.DefaultThemeModern(),
+		Input: rovel.InputOpts{},
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create app: %v\n", err)
@@ -198,7 +198,7 @@ func main() {
 	}
 	defer app.Restore()
 
-	ticker := widgets.NewTicker(app, 33*time.Millisecond, func(dt time.Duration, size geom.Size, ctx *tui.UpdateCtx) {
+	ticker := widgets.NewTicker(app, 33*time.Millisecond, func(dt time.Duration, size geom.Size, ctx *rovel.UpdateCtx) {
 		state.phase += dt.Seconds()
 		ctx.InvalidateAll()
 	})

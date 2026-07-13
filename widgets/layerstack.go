@@ -1,8 +1,8 @@
 package widgets
 
 import (
-	"github.com/losinggeneration/tui"
-	"github.com/losinggeneration/tui/geom"
+	"github.com/losinggeneration/rovel"
+	"github.com/losinggeneration/rovel/geom"
 )
 
 // LayerStack is a compositing container that renders children as
@@ -19,26 +19,26 @@ import (
 //
 // For interactive modal overlays (dialogs, menus), use App.ShowOverlay instead.
 type LayerStack struct {
-	id     tui.ID
+	id     rovel.ID
 	rect   geom.Rect
-	layers []tui.View
+	layers []rovel.View
 }
 
 // NewLayerStack creates a compositing stack. Layers are painted in order:
 // layers[0] is the background, layers[len-1] is the foreground.
-func NewLayerStack(layers ...tui.View) *LayerStack {
+func NewLayerStack(layers ...rovel.View) *LayerStack {
 	return &LayerStack{
-		id:     tui.NewID(),
+		id:     rovel.NewID(),
 		layers: layers,
 	}
 }
 
 // SetLayers replaces the layer list.
-func (s *LayerStack) SetLayers(layers []tui.View) {
+func (s *LayerStack) SetLayers(layers []rovel.View) {
 	s.layers = layers
 }
 
-func (s *LayerStack) ID() tui.ID      { return s.id }
+func (s *LayerStack) ID() rovel.ID      { return s.id }
 func (s *LayerStack) Rect() geom.Rect { return s.rect }
 
 func (s *LayerStack) MinSize() geom.Size {
@@ -62,16 +62,16 @@ func (s *LayerStack) Layout(r geom.Rect) {
 	}
 }
 
-func (s *LayerStack) Paint(d tui.Drawer, ctx *tui.Ctx) {
+func (s *LayerStack) Paint(d rovel.Drawer, ctx *rovel.Ctx) {
 	// Paint bottom-to-top — later layers overwrite earlier cells.
 	for _, l := range s.layers {
-		d.WithClip(s.rect, func(d tui.Drawer) {
+		d.WithClip(s.rect, func(d rovel.Drawer) {
 			l.Paint(d, ctx)
 		})
 	}
 }
 
-func (s *LayerStack) Handle(e tui.Event, ctx *tui.Ctx) bool {
+func (s *LayerStack) Handle(e rovel.Event, ctx *rovel.Ctx) bool {
 	// Dispatch top-to-bottom — topmost layer gets first crack.
 	for i := len(s.layers) - 1; i >= 0; i-- {
 		if s.layers[i].Handle(e, ctx) {
@@ -83,6 +83,6 @@ func (s *LayerStack) Handle(e tui.Event, ctx *tui.Ctx) bool {
 
 func (s *LayerStack) Focusable() bool { return false }
 
-func (s *LayerStack) Children() []tui.View {
+func (s *LayerStack) Children() []rovel.View {
 	return s.layers
 }

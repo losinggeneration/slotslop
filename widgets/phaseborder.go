@@ -1,9 +1,9 @@
 package widgets
 
 import (
-	"github.com/losinggeneration/tui"
-	"github.com/losinggeneration/tui/geom"
-	"github.com/losinggeneration/tui/style"
+	"github.com/losinggeneration/rovel"
+	"github.com/losinggeneration/rovel/geom"
+	"github.com/losinggeneration/rovel/style"
 )
 
 // PhaseBorderStyleFn computes the style for a single border cell.
@@ -19,10 +19,10 @@ import (
 //
 // A minimal rainbow border:
 //
-//	widgets.NewPhaseBorder(child, func(part tui.BoxPart, x, y int, r geom.Rect, phase, t float64) style.Style {
+//	widgets.NewPhaseBorder(child, func(part rovel.BoxPart, x, y int, r geom.Rect, phase, t float64) style.Style {
 //	    return style.Style{FG: hsvColor(360*t + phase*200, 1, 1)}
 //	})
-type PhaseBorderStyleFn func(part tui.BoxPart, x, y int, r geom.Rect, phase, t float64) style.Style
+type PhaseBorderStyleFn func(part rovel.BoxPart, x, y int, r geom.Rect, phase, t float64) style.Style
 
 // PhaseBorder is a border wrapper with time-animated styling.
 // It wraps a child view in a 1-cell border whose style is computed per-cell
@@ -37,8 +37,8 @@ type PhaseBorderStyleFn func(part tui.BoxPart, x, y int, r geom.Rect, phase, t f
 // To omit the title (e.g. for SlotSlop-style animated borders), simply
 // don't call SetTitle.
 type PhaseBorder struct {
-	id      tui.ID
-	child   tui.View
+	id      rovel.ID
+	child   rovel.View
 	rect    geom.Rect
 	title   string
 	phase   float64
@@ -47,9 +47,9 @@ type PhaseBorder struct {
 
 // NewPhaseBorder wraps child in an animated border. styleFn is called for
 // every border cell during Paint with the current phase and normalized position.
-func NewPhaseBorder(child tui.View, styleFn PhaseBorderStyleFn) *PhaseBorder {
+func NewPhaseBorder(child rovel.View, styleFn PhaseBorderStyleFn) *PhaseBorder {
 	return &PhaseBorder{
-		id:      tui.NewID(),
+		id:      rovel.NewID(),
 		child:   child,
 		styleFn: styleFn,
 	}
@@ -67,7 +67,7 @@ func (b *PhaseBorder) SetPhase(phase float64) { b.phase = phase }
 // Phase returns the current animation phase.
 func (b *PhaseBorder) Phase() float64 { return b.phase }
 
-func (b *PhaseBorder) ID() tui.ID      { return b.id }
+func (b *PhaseBorder) ID() rovel.ID      { return b.id }
 func (b *PhaseBorder) Rect() geom.Rect { return b.rect }
 
 func (b *PhaseBorder) MinSize() geom.Size {
@@ -86,7 +86,7 @@ func (b *PhaseBorder) Layout(r geom.Rect) {
 	b.child.Layout(inner)
 }
 
-func (b *PhaseBorder) Paint(d tui.Drawer, ctx *tui.Ctx) {
+func (b *PhaseBorder) Paint(d rovel.Drawer, ctx *rovel.Ctx) {
 	r := b.rect
 	if r.W < 2 || r.H < 2 {
 		return
@@ -94,8 +94,8 @@ func (b *PhaseBorder) Paint(d tui.Drawer, ctx *tui.Ctx) {
 
 	total := perimeterLen(r)
 
-	d.WithClip(r, func(d tui.Drawer) {
-		cd, ok := tui.CellDrawerOf(d)
+	d.WithClip(r, func(d rovel.Drawer) {
+		cd, ok := rovel.CellDrawerOf(d)
 		if !ok {
 			return
 		}
@@ -116,9 +116,9 @@ func (b *PhaseBorder) Paint(d tui.Drawer, ctx *tui.Ctx) {
 				t = t[:maxW]
 			}
 			for i, ch := range t {
-				idx := perimeterIndex(tui.BoxPartTop, titleX+i, r.Y, r)
+				idx := perimeterIndex(rovel.BoxPartTop, titleX+i, r.Y, r)
 				nt := float64(idx) / float64(total)
-				st := b.styleFn(tui.BoxPartTop, titleX+i, r.Y, r, b.phase, nt)
+				st := b.styleFn(rovel.BoxPartTop, titleX+i, r.Y, r, b.phase, nt)
 				cd.SetCell(titleX+i, r.Y, ch, st)
 			}
 		}
@@ -130,23 +130,23 @@ func (b *PhaseBorder) Paint(d tui.Drawer, ctx *tui.Ctx) {
 		W: r.W - 2,
 		H: r.H - 2,
 	}
-	d.WithClip(inner, func(d tui.Drawer) {
+	d.WithClip(inner, func(d rovel.Drawer) {
 		b.child.Paint(d, ctx)
 	})
 }
 
-func (b *PhaseBorder) Handle(e tui.Event, ctx *tui.Ctx) bool {
+func (b *PhaseBorder) Handle(e rovel.Event, ctx *rovel.Ctx) bool {
 	return b.child.Handle(e, ctx)
 }
 
 func (b *PhaseBorder) Focusable() bool { return false }
 
-func (b *PhaseBorder) Children() []tui.View {
-	return []tui.View{b.child}
+func (b *PhaseBorder) Children() []rovel.View {
+	return []rovel.View{b.child}
 }
 
 type cellInfo struct {
-	part tui.BoxPart
+	part rovel.BoxPart
 	x, y int
 	ch   rune
 }
@@ -156,32 +156,32 @@ func computeBorderCells(r geom.Rect) []cellInfo {
 	// Top edge L→R
 	for i := 0; i < r.W; i++ {
 		ch := '─'
-		part := tui.BoxPartTop
+		part := rovel.BoxPartTop
 		if i == 0 {
-			ch, part = '┌', tui.BoxPartCornerTL
+			ch, part = '┌', rovel.BoxPartCornerTL
 		} else if i == r.W-1 {
-			ch, part = '┐', tui.BoxPartCornerTR
+			ch, part = '┐', rovel.BoxPartCornerTR
 		}
 		out = append(out, cellInfo{part, r.X + i, r.Y, ch})
 	}
 	// Right edge T→B
 	for j := 1; j < r.H-1; j++ {
-		out = append(out, cellInfo{tui.BoxPartRight, r.X + r.W - 1, r.Y + j, '│'})
+		out = append(out, cellInfo{rovel.BoxPartRight, r.X + r.W - 1, r.Y + j, '│'})
 	}
 	// Bottom edge R→L
 	for i := r.W - 1; i >= 0; i-- {
 		ch := '─'
-		part := tui.BoxPartBottom
+		part := rovel.BoxPartBottom
 		if i == 0 {
-			ch, part = '└', tui.BoxPartCornerBL
+			ch, part = '└', rovel.BoxPartCornerBL
 		} else if i == r.W-1 {
-			ch, part = '┘', tui.BoxPartCornerBR
+			ch, part = '┘', rovel.BoxPartCornerBR
 		}
 		out = append(out, cellInfo{part, r.X + i, r.Y + r.H - 1, ch})
 	}
 	// Left edge B→T
 	for j := r.H - 2; j >= 1; j-- {
-		out = append(out, cellInfo{tui.BoxPartLeft, r.X, r.Y + j, '│'})
+		out = append(out, cellInfo{rovel.BoxPartLeft, r.X, r.Y + j, '│'})
 	}
 	return out
 }
@@ -204,7 +204,7 @@ func perimeterLen(r geom.Rect) int {
 //	right  (T→B):  W .. W+H-3          (H-2 cells, excluding corners)
 //	bottom (R→L):  W+H-2 .. 2W+H-3    (W cells, includes both corners)
 //	left   (B→T):  2W+H-2 .. 2W+2H-5  (H-2 cells, excluding corners)
-func perimeterIndex(part tui.BoxPart, x, y int, r geom.Rect) int {
+func perimeterIndex(part rovel.BoxPart, x, y int, r geom.Rect) int {
 	switch {
 	case y == r.Y:
 		return x - r.X

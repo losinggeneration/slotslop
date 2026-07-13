@@ -12,15 +12,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/losinggeneration/rovel"
+	"github.com/losinggeneration/rovel/geom"
+	"github.com/losinggeneration/rovel/style"
+	"github.com/losinggeneration/rovel/text"
+
 	"github.com/losinggeneration/slotslop/internal/data"
 	"github.com/losinggeneration/slotslop/internal/engine"
 	"github.com/losinggeneration/slotslop/internal/fx"
 	"github.com/losinggeneration/slotslop/internal/outcome"
 	"github.com/losinggeneration/slotslop/widgets"
-	"github.com/losinggeneration/tui"
-	"github.com/losinggeneration/tui/geom"
-	"github.com/losinggeneration/tui/style"
-	"github.com/losinggeneration/tui/text"
 )
 
 // ── Layout constants ──────────────────────────────────────────────────────────
@@ -48,11 +49,11 @@ func calcMaxLabel() int {
 var maxLabel = calcMaxLabel()
 
 var (
-	contentW  = maxLabel + 2            // inner content width of a reel
-	reelW     = contentW + 4            // total reel box width (border + padding)
-	gap       = 2                       // horizontal gap between reels
-	machineW  = reelW*3 + gap*2         // total machine width
-	leftPad   = 1                       // left padding (matches TSX padding: 1)
+	contentW = maxLabel + 2    // inner content width of a reel
+	reelW    = contentW + 4    // total reel box width (border + padding)
+	gap      = 2               // horizontal gap between reels
+	machineW = reelW*3 + gap*2 // total machine width
+	leftPad  = 1               // left padding (matches TSX padding: 1)
 )
 
 var reelOffsets = [5]int{-2, -1, 0, 1, 2} // 5 visible rows; 0 = payline
@@ -96,8 +97,8 @@ func hexColor(hex string) style.Color {
 
 // ── Theme with black background ──────────────────────────────────────────────
 
-func blackTheme() tui.Theme {
-	t := tui.DefaultThemeModern()
+func blackTheme() rovel.Theme {
+	t := rovel.DefaultThemeModern()
 	t.Base.BG = style.ColorRGB(0, 0, 0)
 	return t
 }
@@ -137,18 +138,18 @@ var S slotState
 // ── View ──────────────────────────────────────────────────────────────────────
 
 type appView struct {
-	id   tui.ID
+	id   rovel.ID
 	rect geom.Rect
 }
 
-func newAppView() *appView { return &appView{id: tui.NewID()} }
+func newAppView() *appView { return &appView{id: rovel.NewID()} }
 
-func (v *appView) ID() tui.ID        { return v.id }
-func (v *appView) Rect() geom.Rect   { return v.rect }
-func (v *appView) MinSize() geom.Size { return geom.Size{W: machineW + 4, H: 24} }
-func (v *appView) Layout(r geom.Rect) { v.rect = r }
-func (v *appView) Focusable() bool    { return false }
-func (v *appView) Children() []tui.View { return nil }
+func (v *appView) ID() rovel.ID           { return v.id }
+func (v *appView) Rect() geom.Rect        { return v.rect }
+func (v *appView) MinSize() geom.Size     { return geom.Size{W: machineW + 4, H: 24} }
+func (v *appView) Layout(r geom.Rect)     { v.rect = r }
+func (v *appView) Focusable() bool        { return false }
+func (v *appView) Children() []rovel.View { return nil }
 
 // Layout (matching the original TSX exactly):
 //
@@ -165,14 +166,14 @@ func (v *appView) Children() []tui.View { return nil }
 //	Row 16: blank spacer
 //	Row 17: Instructions / results
 
-func (v *appView) Paint(dd tui.Drawer, ctx *tui.Ctx) {
+func (v *appView) Paint(dd rovel.Drawer, ctx *rovel.Ctx) {
 	r := v.rect
 	phase := S.phase
 	cw := contentW
 	base := ctx.Theme.Base
 	bold := base.WithAttr(style.AttrBold)
 	dim := base.WithAttr(style.AttrDim)
-	cd, _ := tui.CellDrawerOf(dd)
+	cd, _ := rovel.CellDrawerOf(dd)
 
 	// Everything is left-aligned with leftPad cells from the left edge
 	// (matching the original TSX's padding: 1)
@@ -303,9 +304,9 @@ func (v *appView) Paint(dd tui.Drawer, ctx *tui.Ctx) {
 			bHue = *o.Hue + math.Sin(phase*4)*12
 		}
 		cmdW := text.Width(cmd) + 4
-		dd.DrawBorder(geom.Rect{X: instrX, Y: resY, W: cmdW, H: 3}, tui.BoxStyle{
-			Glyphs: tui.BoxGlyphsLight,
-			Edges:  tui.BoxEdgesAll,
+		dd.DrawBorder(geom.Rect{X: instrX, Y: resY, W: cmdW, H: 3}, rovel.BoxStyle{
+			Glyphs: rovel.BoxGlyphsLight,
+			Edges:  rovel.BoxEdgesAll,
 			Style:  style.Style{FG: hsvColor(bHue, 1, 0.6)},
 		})
 		dd.DrawText(geom.Point{X: instrX + 2, Y: resY + 1}, cmd, bold)
@@ -329,17 +330,17 @@ func (v *appView) Paint(dd tui.Drawer, ctx *tui.Ctx) {
 	}
 }
 
-func (v *appView) Handle(e tui.Event, ctx *tui.Ctx) bool {
-	ke, ok := e.(tui.KeyEvent)
+func (v *appView) Handle(e rovel.Event, ctx *rovel.Ctx) bool {
+	ke, ok := e.(rovel.KeyEvent)
 	if !ok {
 		return false
 	}
 
-	isEnter := ke.Key == tui.KeyEnter
-	isSpace := ke.Key == tui.KeyRune && ke.Rune == ' '
+	isEnter := ke.Key == rovel.KeyEnter
+	isSpace := ke.Key == rovel.KeyRune && ke.Rune == ' '
 
 	switch {
-	case ke.Key == tui.KeyEsc || (ke.Key == tui.KeyRune && ke.Rune == 'q'):
+	case ke.Key == rovel.KeyEsc || (ke.Key == rovel.KeyRune && ke.Rune == 'q'):
 		S.finishCmd = S.eng.Command(S.prompt)
 		S.finishRun = false
 		ctx.Quit()
@@ -378,7 +379,7 @@ func reelCenter(active int, root geom.Rect) (float64, float64) {
 
 // ── Sub-painters ──────────────────────────────────────────────────────────────
 
-func paintMarquee(cd tui.CellDrawer, x, y, width int, phase float64, hue *float64) {
+func paintMarquee(cd rovel.CellDrawer, x, y, width int, phase float64, hue *float64) {
 	for i := range width {
 		var st style.Style
 		if hue == nil {
@@ -392,7 +393,7 @@ func paintMarquee(cd tui.CellDrawer, x, y, width int, phase float64, hue *float6
 	}
 }
 
-func paintMoodText(cd tui.CellDrawer, x, y int, txt string, hue, phase float64) {
+func paintMoodText(cd rovel.CellDrawer, x, y int, txt string, hue, phase float64) {
 	flash := math.Sin(phase*7) > 0.78
 	widgets.StyledRunText(cd, x, y, txt, func(i int, ch rune) style.Style {
 		if flash {
@@ -403,7 +404,7 @@ func paintMoodText(cd tui.CellDrawer, x, y int, txt string, hue, phase float64) 
 	})
 }
 
-func paintReel(cd tui.CellDrawer, dd tui.Drawer, ctx *tui.Ctx, idx, mx, titleY, boxY, cw int) {
+func paintReel(cd rovel.CellDrawer, dd rovel.Drawer, ctx *rovel.Ctx, idx, mx, titleY, boxY, cw int) {
 	col := &S.eng.Cols[idx]
 	x := mx + idx*(reelW+gap)
 	active := idx == S.eng.Active
@@ -434,9 +435,9 @@ func paintReel(cd tui.CellDrawer, dd tui.Drawer, ctx *tui.Ctx, idx, mx, titleY, 
 	if stopped {
 		bCol = style.ColorBasic(2)
 	}
-	dd.DrawBorder(geom.Rect{X: x, Y: boxY, W: reelW, H: 7}, tui.BoxStyle{
-		Glyphs: tui.BoxGlyphsLight,
-		Edges:  tui.BoxEdgesAll,
+	dd.DrawBorder(geom.Rect{X: x, Y: boxY, W: reelW, H: 7}, rovel.BoxStyle{
+		Glyphs: rovel.BoxGlyphsLight,
+		Edges:  rovel.BoxEdgesAll,
 		Style:  style.Style{FG: bCol},
 	})
 
@@ -469,7 +470,10 @@ func paintReel(cd tui.CellDrawer, dd tui.Drawer, ctx *tui.Ctx, idx, mx, titleY, 
 
 // ── Perimeter cells (for shimmer border) ─────────────────────────────────────
 
-type borderCell struct{ x, y int; ch string }
+type borderCell struct {
+	x, y int
+	ch   string
+}
 
 func borderCells(r geom.Rect) []borderCell {
 	var out []borderCell
@@ -514,9 +518,9 @@ func main() {
 		S.prompt = "do something cool"
 	}
 
-	app, err := tui.New(tui.AppOpts{
+	app, err := rovel.New(rovel.AppOpts{
 		Theme: blackTheme(),
-		Input: tui.InputOpts{},
+		Input: rovel.InputOpts{},
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create app: %v\n", err)
@@ -535,7 +539,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ticker := widgets.NewTicker(app, 33*time.Millisecond, func(dt time.Duration, size geom.Size, ctx *tui.UpdateCtx) {
+	ticker := widgets.NewTicker(app, 33*time.Millisecond, func(dt time.Duration, size geom.Size, ctx *rovel.UpdateCtx) {
 		sec := dt.Seconds()
 		S.phase += sec
 

@@ -1,8 +1,8 @@
 package widgets
 
 import (
-	"github.com/losinggeneration/tui"
-	"github.com/losinggeneration/tui/geom"
+	"github.com/losinggeneration/rovel"
+	"github.com/losinggeneration/rovel/geom"
 )
 
 // Centered is a layout wrapper that centers its child horizontally within
@@ -11,20 +11,20 @@ import (
 //
 // Vertically, the child fills the full height of the parent.
 type Centered struct {
-	id    tui.ID
-	child tui.View
+	id    rovel.ID
+	child rovel.View
 	rect  geom.Rect
 }
 
 // NewCentered wraps child so it is horizontally centered within its parent.
-func NewCentered(child tui.View) *Centered {
+func NewCentered(child rovel.View) *Centered {
 	return &Centered{
-		id:    tui.NewID(),
+		id:    rovel.NewID(),
 		child: child,
 	}
 }
 
-func (c *Centered) ID() tui.ID      { return c.id }
+func (c *Centered) ID() rovel.ID      { return c.id }
 func (c *Centered) Rect() geom.Rect { return c.rect }
 
 func (c *Centered) MinSize() geom.Size {
@@ -46,13 +46,13 @@ func (c *Centered) Layout(r geom.Rect) {
 	})
 }
 
-func (c *Centered) Paint(d tui.Drawer, ctx *tui.Ctx) {
-	d.WithClip(c.child.Rect(), func(d tui.Drawer) {
+func (c *Centered) Paint(d rovel.Drawer, ctx *rovel.Ctx) {
+	d.WithClip(c.child.Rect(), func(d rovel.Drawer) {
 		c.child.Paint(d, ctx)
 	})
 }
 
-func (c *Centered) Handle(e tui.Event, ctx *tui.Ctx) bool {
+func (c *Centered) Handle(e rovel.Event, ctx *rovel.Ctx) bool {
 	return c.child.Handle(e, ctx)
 }
 
@@ -63,6 +63,6 @@ func (c *Centered) Focusable() bool {
 	return false
 }
 
-func (c *Centered) Children() []tui.View {
-	return []tui.View{c.child}
+func (c *Centered) Children() []rovel.View {
+	return []rovel.View{c.child}
 }

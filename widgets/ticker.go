@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/losinggeneration/tui"
-	"github.com/losinggeneration/tui/geom"
+	"github.com/losinggeneration/rovel"
+	"github.com/losinggeneration/rovel/geom"
 )
 
 // TickFn is the callback invoked on each tick. It receives the elapsed
@@ -15,7 +15,7 @@ import (
 // Unlike a raw Post callback, TickFn runs at a fixed cadence and
 // receives timing information — making it suitable for animations,
 // physics updates, and game loops.
-type TickFn func(dt time.Duration, size geom.Size, ctx *tui.UpdateCtx)
+type TickFn func(dt time.Duration, size geom.Size, ctx *rovel.UpdateCtx)
 
 // Ticker provides periodic tick callbacks on the app's event loop.
 //
@@ -28,14 +28,14 @@ type TickFn func(dt time.Duration, size geom.Size, ctx *tui.UpdateCtx)
 //
 // Usage:
 //
-//	ticker := widgets.NewTicker(app, 33*time.Millisecond, func(dt time.Duration, size geom.Size, ctx *tui.UpdateCtx) {
+//	ticker := widgets.NewTicker(app, 33*time.Millisecond, func(dt time.Duration, size geom.Size, ctx *rovel.UpdateCtx) {
 //	    state.Advance(dt.Seconds())
 //	    ctx.InvalidateAll()
 //	})
 //	ticker.Start()
 //	defer ticker.Stop()
 type Ticker struct {
-	app      *tui.App
+	app      *rovel.App
 	interval time.Duration
 	fn       TickFn
 	stopCh   chan struct{}
@@ -44,7 +44,7 @@ type Ticker struct {
 
 // NewTicker creates a periodic ticker that invokes fn on the app loop.
 // The ticker does not start until Start() is called.
-func NewTicker(app *tui.App, interval time.Duration, fn TickFn) *Ticker {
+func NewTicker(app *rovel.App, interval time.Duration, fn TickFn) *Ticker {
 	return &Ticker{
 		app:      app,
 		interval: interval,
@@ -84,7 +84,7 @@ func (t *Ticker) run() {
 
 			size := t.app.Size()
 
-			_ = t.app.Post(func(ctx *tui.UpdateCtx) {
+			_ = t.app.Post(func(ctx *rovel.UpdateCtx) {
 				t.fn(dt, size, ctx)
 			})
 		}
